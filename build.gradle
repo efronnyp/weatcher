@@ -6,6 +6,8 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:2.2.3'
+        classpath 'me.tatarka:gradle-retrolambda:3.4.0'
+        classpath 'io.realm:realm-gradle-plugin:2.2.2'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -20,4 +22,15 @@ allprojects {
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+ext {
+    //Libs version
+    retrofitVersion = '2.1.0'
+    supportLibraryVersion = '25.0.1'
+    glideVersion = '3.7.0'
+    butterKnifeVersion = '8.4.0'
+    junitVersion = '4.12'
+    rxAndroidVersion = '1.2.1'
+    rxJavaVersion = '1.1.6'
 }
