@@ -21,8 +21,8 @@ public class CurrentObservation extends RealmObject {
     public String local_tz_offset;
     public String weather;
     public String temperature_string;
-    public int temp_f;
-    public int temp_c;
+    public String temp_f;
+    public String temp_c;
     public String relative_humidity;
     public String wind_string;
     public String wind_dir;
