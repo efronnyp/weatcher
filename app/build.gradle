@@ -12,13 +12,18 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        // Enabling multidex support.
+        multiDexEnabled true
     }
     buildTypes {
         debug {
             resValue "string", "wunderground_api_key", "YOUR_API_KEY_HERE"
+            resValue "string", "google_maps_api_key", "YOUR_API_KEY_HERE"
         }
         release {
             resValue "string", "wunderground_api_key", "YOUR_API_KEY_HERE"
+            resValue "string", "google_maps_api_key", "YOUR_API_KEY_HERE"
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -29,12 +34,15 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     compile "com.android.support:appcompat-v7:$rootProject.ext.supportLibraryVersion"
     compile "com.android.support:design:$rootProject.ext.supportLibraryVersion"
+    compile "com.android.support:cardview-v7:$rootProject.ext.supportLibraryVersion"
+    compile "com.google.android.gms:play-services-location:9.6.1"
+    compile "com.google.android.gms:play-services:9.6.1"
     compile "com.squareup.retrofit2:retrofit:$rootProject.ext.retrofitVersion"
     compile "com.squareup.retrofit2:converter-gson:$rootProject.ext.retrofitVersion"
     compile "com.squareup.retrofit2:adapter-rxjava:$rootProject.ext.retrofitVersion"
@@ -42,7 +50,9 @@ dependencies {
     compile "com.jakewharton:butterknife:$rootProject.ext.butterKnifeVersion"
     compile "io.reactivex:rxandroid:$rootProject.ext.rxAndroidVersion"
     compile "io.reactivex:rxjava:$rootProject.ext.rxJavaVersion"
+    compile "com.google.dagger:dagger:$rootProject.ext.daggerVersion"
 
+    annotationProcessor "com.google.dagger:dagger-compiler:$rootProject.ext.daggerVersion"
     annotationProcessor "com.jakewharton:butterknife-compiler:$rootProject.ext.butterKnifeVersion"
 
     testCompile "junit:junit:$rootProject.ext.junitVersion"
