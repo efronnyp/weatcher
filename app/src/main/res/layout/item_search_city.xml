@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/searchCityRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="15dp"
+    android:background="@android:color/transparent"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tvPlaceName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="47dp"
+        android:layout_marginStart="47dp"
+        android:padding="8dp"
+        android:textColor="#323232" />
+
+    <!--<View
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:layout_marginTop="20dp"
+        android:background="#c2c2c2" />-->
+
+</LinearLayout>

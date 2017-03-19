@@ -3,4 +3,7 @@
     <color name="colorPrimary">#009688</color>
     <color name="colorPrimaryDark">#00796b</color>
     <color name="colorAccent">#00b8d4</color>
+
+    <color name="search_box_bg_color">#232929</color>
+    <color name="suggestion_list_bg_color">#82ffffff</color>
 </resources>

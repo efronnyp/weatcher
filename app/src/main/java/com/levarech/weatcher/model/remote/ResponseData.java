@@ -1,4 +1,4 @@
-package com.levarech.weatcher.models;
+package com.levarech.weatcher.model.remote;
 
 /**
  * Created by EFR on 16/03/2017.
@@ -8,5 +8,4 @@ package com.levarech.weatcher.models;
 public class ResponseData {
     public String version;
     public String termsofService;
-    public String features;
 }

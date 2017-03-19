@@ -1,6 +1,6 @@
-package com.levarech.weatcher.interfaces;
+package com.levarech.weatcher.api;
 
-import com.levarech.weatcher.models.CurrentConditionsResponse;
+import com.levarech.weatcher.model.remote.ConditionsResponse;
 
 import retrofit2.http.GET;
 import retrofit2.http.Path;
@@ -12,7 +12,7 @@ import rx.Observable;
  */
 
 public interface WeatherService {
-    String WEATHER_API_URL = "http://api.wunderground.com/api/{api_key}";
+    String WEATHER_API_URL = "http://api.wunderground.com/api/{api_key}/";
 
     /**
      * Get current weather conditions using country code and city name as parameter. <br>
@@ -21,8 +21,8 @@ public interface WeatherService {
      * @param cityName The Name of The City
      */
     @GET("conditions/q/{country_code}/{city_name}.json")
-    Observable<CurrentConditionsResponse> getCurrentByCityName(@Path("country_code") String countryCode,
-                                                               @Path("city_name") String cityName);
+    Observable<ConditionsResponse> getCurrentByCityName(@Path("country_code") String countryCode,
+                                                        @Path("city_name") String cityName);
 
     /**
      * Get current weather conditions using location latitude and longitude as parameter. <br>
@@ -31,7 +31,8 @@ public interface WeatherService {
      * @param longitude Longitude value of location
      */
     @GET("conditions/q/{lat},{lon}.json")
-    Observable<String> getCurrentByLocation(@Path("lat") double latitude, @Path("lon") double longitude);
+    Observable<ConditionsResponse> getCurrentByLocation(@Path("lat") String latitude,
+                                                        @Path("lon") String longitude);
 
     /**
      * Get weather forecast for next 10 days using country code and city name as parameter. <br>
@@ -40,7 +41,8 @@ public interface WeatherService {
      * @param cityName The Name of The City
      */
     @GET("forecast10day/q/{country_code}/{city_name}.json")
-    Observable<String> getForecastForNext10Days(@Path("country_code") String countryCode, @Path("city_name") String cityName);
+    Observable<String> getForecastForNext10Days(@Path("country_code") String countryCode,
+                                                @Path("city_name") String cityName);
 
     /**
      * Get weather forecast hourly for next 2 days. <br>
@@ -49,5 +51,6 @@ public interface WeatherService {
      * @param cityName The Name of The City
      */
     @GET("hourly/q/{country_code}/{city_name}.json")
-    Observable<String> getForecastHourly(@Path("country_code") String countryCode, @Path("city_name") String cityName);
+    Observable<String> getForecastHourly(@Path("country_code") String countryCode,
+                                         @Path("city_name") String cityName);
 }
