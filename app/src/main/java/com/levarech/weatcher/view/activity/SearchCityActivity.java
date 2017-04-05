@@ -2,8 +2,6 @@ package com.levarech.weatcher.view.activity;
 
 import android.content.Context;
 import android.content.Intent;
-import android.location.Address;
-import android.location.Geocoder;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -29,12 +27,14 @@ import com.google.android.gms.location.places.Places;
 import com.levarech.weatcher.R;
 import com.levarech.weatcher.model.local.CityConditions;
 import com.levarech.weatcher.presenter.WeatherPresenter;
-import com.levarech.weatcher.view.WeatherView;
+import com.levarech.weatcher.view.WeatherAddView;
 import com.levarech.weatcher.view.adapter.OnItemClickListener;
 import com.levarech.weatcher.view.adapter.SearchSuggestionAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
@@ -48,7 +48,7 @@ import butterknife.OnClick;
 
 public class SearchCityActivity extends AppCompatActivity implements
         GoogleApiClient.OnConnectionFailedListener,
-        OnItemClickListener<AutocompletePrediction>, WeatherView {
+        OnItemClickListener<AutocompletePrediction>, WeatherAddView {
 
     private static final String TAG = SearchCityActivity.class.getSimpleName();
 
@@ -59,6 +59,7 @@ public class SearchCityActivity extends AppCompatActivity implements
     private GoogleApiClient mGoogleApiClient;
     private AutocompleteFilter mPlaceFilter;
     private List<AutocompletePrediction> mPredictions;
+    private Timer autoCompleteTimer;
 
     public static Intent prepareIntent(Context source) {
         return new Intent(source, SearchCityActivity.class);
@@ -87,8 +88,22 @@ public class SearchCityActivity extends AppCompatActivity implements
 
             @Override
             public boolean onQueryTextChange(String newText) {
+                if (autoCompleteTimer != null) {
+                    autoCompleteTimer.cancel();
+                }
                 if (newText.length() >= 3) {
-                    onNewQuery(newText);
+                    autoCompleteTimer = new Timer();
+                    autoCompleteTimer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            onNewQuery(newText);
+                        }
+                    }, 2100);
+                } else {
+                    if (mPredictions != null) {
+                        mPredictions.clear();
+                        setupRecyclerView();
+                    }
                 }
                 return true;
             }
@@ -161,7 +176,7 @@ public class SearchCityActivity extends AppCompatActivity implements
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
+        showError(connectionResult.getErrorMessage());
     }
 
     @OnClick(R.id.cancelButton)
@@ -182,12 +197,12 @@ public class SearchCityActivity extends AppCompatActivity implements
                 Place place = places.get(0);
                 double lat = place.getLatLng().latitude;
                 double lon = place.getLatLng().longitude;
-                Geocoder geocoder = new Geocoder(this);
+                //Geocoder geocoder = new Geocoder(this);
 
                 try {
-                    List<Address> addresses = geocoder.getFromLocation(lat, lon, 1);
-                    String countryCode = addresses.get(0).getCountryCode();
-                    String cityName = addresses.get(0).getAdminArea();
+                    /*List<Address> addresses = geocoder.getFromLocation(lat, lon, 1);
+                    /*String countryCode = addresses.get(0).getCountryCode();
+                    String cityName = addresses.get(0).getSubAdminArea();
 
                     /*if (countryCode != null && cityName != null) {
                         mPresenter.saveCityByName(countryCode, cityName);
@@ -206,17 +221,7 @@ public class SearchCityActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onReceivedCityList(List<CityConditions> citiesConditions) {
-        // not-used
-    }
-
-    @Override
-    public void onReceivedCurrentLocationConditions(CityConditions conditions) {
-        // not-used
-    }
-
-    @Override
-    public void onNewCitySuccessfullySaved(CityConditions conditions) {
+    public void onNewCitySavedSuccessfully(CityConditions conditions) {
         finish();
     }
 

@@ -13,6 +13,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.ContentLoadingProgressBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -21,11 +22,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-import com.levarech.weatcher.Constants;
 import com.levarech.weatcher.R;
 import com.levarech.weatcher.model.local.CityConditions;
 import com.levarech.weatcher.presenter.WeatherPresenter;
-import com.levarech.weatcher.view.WeatherView;
+import com.levarech.weatcher.view.WeatherMonitorView;
 import com.levarech.weatcher.view.adapter.SavedCityAdapter;
 
 import java.util.ArrayList;
@@ -35,12 +35,19 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-public class MainActivity extends AppCompatActivity implements WeatherView, LocationListener {
+public class MainActivity extends AppCompatActivity implements WeatherMonitorView, LocationListener {
+
+    private static final int TWO_MINUTES = 2 * 60 * 1000;
+    private static final int MIN_LOCATION_TIME = 5000;
+    private static final int MIN_LOCATION_DISTANCE = 5;
+    private static final int LOCATION_REQUEST_CODE = 34;
 
     @BindView(R.id.fab)
     FloatingActionButton fab;
     @BindView(R.id.rvSavedCityList)
     RecyclerView rvSavedCityList;
+    @BindView(R.id.loadingProgressBar)
+    ContentLoadingProgressBar loadingProgressBar;
 
     private WeatherPresenter mPresenter;
     private List<CityConditions> mCityConditionsList;
@@ -59,9 +66,6 @@ public class MainActivity extends AppCompatActivity implements WeatherView, Loca
         }
 
         ButterKnife.bind(this);
-        /*fab.setOnClickListener(view ->
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show());*/
 
         mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         mCityConditionsList = new ArrayList<>();
@@ -80,39 +84,72 @@ public class MainActivity extends AppCompatActivity implements WeatherView, Loca
     }
 
     private void getCurrentLocation() {
+        Location newLocation = null;
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
                 if (mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-                    mCurrentLocation = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                    if (mCurrentLocation == null) {
+                    newLocation = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    if (newLocation == null) {
                         mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
-                                5000, 5, this);
+                                MIN_LOCATION_TIME, MIN_LOCATION_DISTANCE, this);
                     }
+                } else {
+                    showTurnOnGpsDialog();
                 }
-            }
-
-            if (mCurrentLocation == null) {
+            } else {
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        Constants.LOCATION_REQUEST_CODE);
+                        LOCATION_REQUEST_CODE);
             }
         } else {
-            if (mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                mCurrentLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                if (mCurrentLocation == null) {
-                    mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 5, this);
+            boolean isNetworkEnabled = mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+            boolean isGpsEnabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+            if (isNetworkEnabled || isGpsEnabled) {
+                if (isGpsEnabled) {
+                    newLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                    mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                            MIN_LOCATION_TIME, MIN_LOCATION_DISTANCE, this);
+                }
+
+                if (isNetworkEnabled && newLocation == null) {
+                    newLocation = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                            MIN_LOCATION_TIME, MIN_LOCATION_DISTANCE, this);
                 }
             } else {
                 showTurnOnGpsDialog();
             }
         }
 
-        if (mCurrentLocation != null) {
-            mPresenter.getCurrentLocationWeather(mCurrentLocation.getLatitude(),
+        if (newLocation != null &&
+                (mCurrentLocation == null ||
+                newLocation.getLatitude() != mCurrentLocation.getLatitude() ||
+                newLocation.getLongitude() != mCurrentLocation.getLongitude())) {
+            mCurrentLocation = newLocation;
+            mPresenter.saveCurrentLocation(mCurrentLocation.getLatitude(),
                     mCurrentLocation.getLongitude());
         }
+    }
+
+    private boolean isNewLocationBetter(Location newLocation, Location oldLocation) {
+        if (oldLocation == null) {
+            return true;
+        }
+
+        int timeDiff = (int) (newLocation.getTime() - oldLocation.getTime());
+        if (timeDiff > TWO_MINUTES) {
+            // new location is newer
+            return true;
+        } else if (timeDiff < -TWO_MINUTES) {
+            // new location is too old
+            return false;
+        }
+
+        int accuracyDiff = (int) (newLocation.getAccuracy() - oldLocation.getAccuracy());
+        return accuracyDiff < 0 || (timeDiff > 0 && accuracyDiff < 200);
     }
 
     private void showTurnOnGpsDialog() {
@@ -124,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements WeatherView, Loca
                         (dialogInterface, i) -> {
                             Intent settingIntent =
                                     new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                            startActivityForResult(settingIntent, Constants.LOCATION_REQUEST_CODE);
+                            startActivityForResult(settingIntent, LOCATION_REQUEST_CODE);
                             dialogInterface.dismiss();
                         })
                 .show();
@@ -145,7 +182,6 @@ public class MainActivity extends AppCompatActivity implements WeatherView, Loca
     @Override
     protected void onPause() {
         super.onPause();
-        mPresenter.unsubscribe();
     }
 
     @Override
@@ -157,7 +193,7 @@ public class MainActivity extends AppCompatActivity implements WeatherView, Loca
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
-            case Constants.LOCATION_REQUEST_CODE:
+            case LOCATION_REQUEST_CODE:
                 getCurrentLocation();
             default:
                 super.onActivityResult(requestCode, resultCode, data);
@@ -167,7 +203,7 @@ public class MainActivity extends AppCompatActivity implements WeatherView, Loca
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        if (requestCode == Constants.LOCATION_REQUEST_CODE) {
+        if (requestCode == LOCATION_REQUEST_CODE) {
             getCurrentLocation();
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -177,15 +213,8 @@ public class MainActivity extends AppCompatActivity implements WeatherView, Loca
     @Override
     public void onReceivedCityList(List<CityConditions> citiesConditions) {
         if (mCityConditionsList.size() > 0) {
-            if (mCityConditionsList.get(0).currentCity) {
-                List<CityConditions> newList = new ArrayList<>();
-                newList.add(mCityConditionsList.get(0));
-                newList.addAll(citiesConditions);
-                mCityConditionsList = newList;
-            } else {
-                mCityConditionsList.clear();
-                mCityConditionsList.addAll(citiesConditions);
-            }
+            mCityConditionsList.clear();
+            mCityConditionsList.addAll(citiesConditions);
         } else {
             mCityConditionsList.addAll(citiesConditions);
         }
@@ -203,18 +232,13 @@ public class MainActivity extends AppCompatActivity implements WeatherView, Loca
     }
 
     @Override
-    public void onNewCitySuccessfullySaved(CityConditions conditions) {
-        // not-used
-    }
-
-    @Override
     public void showLoading() {
-        // doSomething
+        loadingProgressBar.show();
     }
 
     @Override
     public void hideLoading() {
-        // doSomething
+        loadingProgressBar.hide();
     }
 
     @Override
@@ -225,9 +249,9 @@ public class MainActivity extends AppCompatActivity implements WeatherView, Loca
 
     @Override
     public void onLocationChanged(Location location) {
-        if (location != null) {
+        if (location != null && isNewLocationBetter(location, mCurrentLocation)) {
             mCurrentLocation = location;
-            mPresenter.getCurrentLocationWeather(location.getLatitude(), location.getLongitude());
+            mPresenter.saveCurrentLocation(location.getLatitude(), location.getLongitude());
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED ||
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)

@@ -2,7 +2,9 @@ package com.levarech.weatcher.presenter;
 
 import android.content.Context;
 
-import com.levarech.weatcher.view.WeatherView;
+import com.levarech.weatcher.view.BaseView;
+import com.levarech.weatcher.view.WeatherAddView;
+import com.levarech.weatcher.view.WeatherMonitorView;
 
 import rx.Observable;
 import rx.Subscription;
@@ -17,11 +19,11 @@ import rx.subscriptions.CompositeSubscription;
 
 public class WeatherPresenter implements Presenter {
 
-    private WeatherView mView;
+    private BaseView mView;
     private CompositeSubscription mSubscription;
     private WeatherDataRepository mRepository;
 
-    public WeatherPresenter(WeatherView view, Context context) {
+    public WeatherPresenter(BaseView view, Context context) {
         this.mView = view;
         mSubscription = new CompositeSubscription();
         mRepository = new WeatherDataRepository(new LocalDataSource(), new RemoteDataSource(context));
@@ -29,23 +31,51 @@ public class WeatherPresenter implements Presenter {
 
     public void getSavedCitiesCondition() {
         mView.showLoading();
-        createSubscription(mRepository.getSavedCitiesCondition(),
-                cityConditionsList -> mView.onReceivedCityList(cityConditionsList));
+        mSubscription.clear();
+        Subscription subscription = mRepository
+                .getSavedCitiesCondition()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        // onNext
+                        cityConditionsList -> ((WeatherMonitorView) mView).onReceivedCityList(cityConditionsList),
+                        // onError
+                        throwable -> {
+                            throwable.printStackTrace();
+                            mView.showError(throwable.getMessage());
+                        },
+                        // onComplete
+                        () -> mView.hideLoading()
+                );
+        mSubscription.add(subscription);
     }
 
     public void getCurrentLocationWeather(double currentLatitude, double currentLongitude) {
         mView.showLoading();
-        createSubscription(
-                // observable
-                mRepository.getCurrentLocationsWeather(Double.toString(currentLatitude),
-                        Double.toString(currentLongitude)),
-                // doOnNext
-                cityConditions -> mView.onReceivedCurrentLocationConditions(cityConditions)
-        );
+        //mSubscription.clear();
+        Subscription subscription = mRepository
+                .getCurrentLocationsWeather(
+                        Double.toString(currentLatitude), Double.toString(currentLongitude))
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                        // onNext
+                        cityConditions -> ((WeatherMonitorView) mView).onReceivedCurrentLocationConditions(cityConditions),
+                        // onError
+                        throwable -> {
+                            throwable.printStackTrace();
+                            mView.showError(throwable.getMessage());
+                        },
+                        // onComplete
+                        () -> mView.hideLoading()
+                );
+        mSubscription.add(subscription);
     }
 
     public void getSavedCityDetail(String cityId) {
 
+    }
+
+    public void saveCurrentLocation(double currentLatitude, double currentLongitude) {
+        mRepository.saveCurrentLocation(Double.toString(currentLatitude), Double.toString(currentLongitude));
     }
 
     public void saveNewCity(double currentLatitude, double currentLongitude) {
@@ -53,7 +83,7 @@ public class WeatherPresenter implements Presenter {
         createSubscription(
                 mRepository.getAndSaveNewCityConditions(
                         Double.toString(currentLatitude), Double.toString(currentLongitude)),
-                conditions -> mView.onNewCitySuccessfullySaved(conditions)
+                conditions -> ((WeatherAddView) mView).onNewCitySavedSuccessfully(conditions)
         );
     }
 
@@ -61,7 +91,7 @@ public class WeatherPresenter implements Presenter {
         mView.showLoading();
         createSubscription(
                 mRepository.getAndSaveNewCityConditionsByName(countryCode, cityName),
-                conditions -> mView.onNewCitySuccessfullySaved(conditions)
+                conditions -> ((WeatherAddView) mView).onNewCitySavedSuccessfully(conditions)
         );
     }
 
@@ -89,16 +119,12 @@ public class WeatherPresenter implements Presenter {
 
     @Override
     public void unsubscribe() {
-        if (mSubscription.hasSubscriptions()) {
-            mSubscription.unsubscribe();
-        }
+        mSubscription.unsubscribe();
     }
 
     @Override
     public void onDestroy() {
-        if (mSubscription.hasSubscriptions()) {
-            mSubscription.unsubscribe();
-        }
+        mSubscription.unsubscribe();
         mRepository.onDestroy();
     }
 }

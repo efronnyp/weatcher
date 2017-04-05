@@ -34,13 +34,13 @@ public class RemoteDataSource implements BaseDataSource {
 
     public Observable<CityConditions> getCityConditions(String latitude, String longitude) {
         return weatherService.getCurrentByLocation(latitude, longitude)
-                .flatMap(conditionsResponse -> {
+                .map(conditionsResponse -> {
                     //Construct CityConditions data from ConditionsResponse returned from API
                     CityConditions cityConditions = new CityConditions();
                     //cityConditions.cityId = to be generated before insert;
                     cityConditions.currentObservation = conditionsResponse.current_observation;
                     cityConditions.lastUpdated = System.currentTimeMillis();
-                    return Observable.just(cityConditions);
+                    return cityConditions;
                 })
                 .subscribeOn(Schedulers.newThread());
     }

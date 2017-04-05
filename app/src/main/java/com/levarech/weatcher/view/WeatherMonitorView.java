@@ -9,11 +9,9 @@ import java.util.List;
  * Interface to represent weather data to view.
  */
 
-public interface WeatherView extends BaseView {
+public interface WeatherMonitorView extends BaseView {
 
     void onReceivedCityList(List<CityConditions> citiesConditions);
 
     void onReceivedCurrentLocationConditions(CityConditions conditions);
-
-    void onNewCitySuccessfullySaved(CityConditions conditions);
 }

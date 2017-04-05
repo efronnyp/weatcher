@@ -2,6 +2,7 @@ package com.levarech.weatcher.view.adapter;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,13 +10,16 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.levarech.weatcher.BuildConfig;
 import com.levarech.weatcher.R;
+import com.levarech.weatcher.model.CurrentObservation;
 import com.levarech.weatcher.model.local.CityConditions;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -28,6 +32,8 @@ import butterknife.ButterKnife;
  */
 
 public class SavedCityAdapter extends RecyclerView.Adapter<SavedCityAdapter.CityViewHolder> {
+
+    private static final String TAG = "CityListViewAdapter";
 
     private List<CityConditions> mCities;
     private Context mContext;
@@ -49,26 +55,32 @@ public class SavedCityAdapter extends RecyclerView.Adapter<SavedCityAdapter.City
     @Override
     public void onBindViewHolder(CityViewHolder holder, int position) {
         CityConditions city = mCities.get(position);
+        CurrentObservation observation = city.currentObservation;
+
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, observation.toString());
+        }
 
         // Set calendar to this city's localtime
-        String timezoneStr = city.currentObservation.local_tz_long;
+        String timezoneStr = observation.local_tz_long;
         if (timezoneStr == null) {
-            timezoneStr = city.currentObservation.local_tz_short;
+            timezoneStr = observation.local_tz_short;
         }
-        mCalendar.setTimeZone(TimeZone.getTimeZone(timezoneStr));
+        mCalendar = new GregorianCalendar(TimeZone.getTimeZone(timezoneStr));
         DateFormat formatter = SimpleDateFormat.getTimeInstance(DateFormat.SHORT);
+        formatter.setTimeZone(TimeZone.getTimeZone(timezoneStr));
         String localTime = formatter.format(mCalendar.getTime());
         holder.tvLocalTime.setText(localTime);
 
         holder.ivCurrentLocationIcon.setVisibility(city.currentCity ? View.VISIBLE :View.GONE);
-        holder.tvDisplayName.setText(city.currentObservation.display_location.city);
-        holder.tvCurrentTemperature.setText(String.format("%s°", city.currentObservation.temp_c));
+        holder.tvDisplayName.setText(observation.display_location.city);
+        holder.tvCurrentTemperature.setText(String.format("%s°", observation.temp_c));
 
         // Set card background
         int drawableResId = 0;
         int hourOfDay = mCalendar.get(Calendar.HOUR_OF_DAY);
-        boolean isNight = (hourOfDay > 17) || (hourOfDay < 7);
-        switch (city.currentObservation.icon) {
+        boolean isNight = (hourOfDay > 17) || (hourOfDay < 6);
+        switch (observation.icon) {
             case "cloudy":
                 drawableResId = isNight ? R.drawable.night_cloudy_partly : R.drawable.day_cloudy;
                 break;
@@ -87,6 +99,11 @@ public class SavedCityAdapter extends RecyclerView.Adapter<SavedCityAdapter.City
             case "rain":
                 drawableResId = R.drawable.day_rain;
                 break;
+            case "hazy":
+                drawableResId = isNight ? R.drawable.night_hazy : R.drawable.day_hazy;
+                break;
+            case "fog":
+                drawableResId = R.drawable.other_fog;
         }
         holder.rlCardRoot.setBackgroundResource(drawableResId);
     }

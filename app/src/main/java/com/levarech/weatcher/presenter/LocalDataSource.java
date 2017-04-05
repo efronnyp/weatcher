@@ -1,5 +1,7 @@
 package com.levarech.weatcher.presenter;
 
+import com.levarech.weatcher.model.CurrentObservation;
+import com.levarech.weatcher.model.DisplayLocation;
 import com.levarech.weatcher.model.local.CityConditions;
 
 import java.util.List;
@@ -7,6 +9,7 @@ import java.util.UUID;
 
 import io.realm.Realm;
 import io.realm.RealmResults;
+import io.realm.Sort;
 import rx.Observable;
 import rx.functions.Func1;
 
@@ -24,17 +27,17 @@ public class LocalDataSource implements BaseDataSource {
     }
 
     public Observable<List<CityConditions>> getSavedCitiesConditions() {
-        //Realm realm = Realm.getDefaultInstance();
-        RealmResults<CityConditions> results = mRealm.where(CityConditions.class)
-                .equalTo("currentCity", false)
-                .findAll();
-        return results.asObservable()
+        return mRealm.where(CityConditions.class)
+                .findAllSortedAsync("currentCity", Sort.DESCENDING)
+                .asObservable()
+                .filter(RealmResults::isLoaded)
                 .flatMap(new Func1<RealmResults<CityConditions>, Observable<List<CityConditions>>>() {
                     @Override
-                    public Observable<List<CityConditions>> call(RealmResults<CityConditions> results1) {
-                        return Observable.just(results1);
+                    public Observable<List<CityConditions>> call(RealmResults<CityConditions> results) {
+                        return Observable.just(results);
                     }
-                });
+                })
+                .first();
         /*return mRealm.where(CityConditions.class)
                 .equalTo("currentCity", false)
                 .findAllAsync()
@@ -53,15 +56,6 @@ public class LocalDataSource implements BaseDataSource {
                 });*/
     }
 
-    /*public Observable<CityConditions> getSavedCityConditions(String latitude, String longitude) {
-        Realm realm = Realm.getDefaultInstance();
-        CityConditions cityConditions = realm.where(CityConditions.class)
-                .equalTo("currentObservation.display_location.latitude", latitude)
-                .equalTo("currentObservation.display_location.latitude", longitude)
-                .findFirst();
-        return cityConditions != null ? cityConditions.asObservable() : Observable.just(null);
-    }*/
-
     public Observable<CityConditions> getSavedCityConditions(String cityId) {
         Realm realm = Realm.getDefaultInstance();
         CityConditions cityConditions = realm.where(CityConditions.class)
@@ -70,37 +64,41 @@ public class LocalDataSource implements BaseDataSource {
         return Observable.just(cityConditions);
     }
 
-    public Observable<CityConditions> getCurrentCityConditions() {
-        CityConditions cityConditions = mRealm.where(CityConditions.class)
-                .equalTo("currentCity", true)
-                .findFirst();
-
-        return cityConditions != null ? cityConditions.asObservable() : Observable.just(null);
+    public CityConditions getCurrentCityConditions() {
         /*return mRealm.where(CityConditions.class)
                 .equalTo("currentCity", true)
                 .findFirstAsync()
                 .asObservable()
-                .filter(realmObject -> {
-                    return realmObject.isLoaded();
-                })
-                .switchIfEmpty(Observable.just(new CityConditions()))
-                .flatMap(new Func1<RealmObject, Observable<CityConditions>>() {
-                    @Override
-                    public Observable<CityConditions> call(RealmObject realmObject) {
-                        return Observable.just((CityConditions) realmObject);
-                    }
-                });*/
+                .filter(realmObject -> realmObject.isLoaded())
+                .map(realmObject -> (CityConditions) realmObject);*/
+        return mRealm.where(CityConditions.class)
+                .equalTo("currentCity", true)
+                .findFirst();
+    }
+
+    public void insertOrUpdateCurrentLocation(String currentLatitude, String currentLongitude) {
+        mRealm.executeTransaction(realm -> {
+            CityConditions currentCity = realm
+                    .where(CityConditions.class)
+                    .equalTo("currentCity", true)
+                    .findFirst();
+
+            if (currentCity == null) {
+                currentCity = new CityConditions();
+                currentCity.cityId = UUID.randomUUID().toString();
+                currentCity.currentCity = true;
+                currentCity.currentObservation = new CurrentObservation(); // placeholder
+                currentCity.currentObservation.display_location = new DisplayLocation(); // placeholder
+            }
+            currentCity.currentObservation.display_location.latitude = currentLatitude;
+            currentCity.currentObservation.display_location.longitude = currentLongitude;
+            realm.insertOrUpdate(currentCity);
+        });
     }
 
     public void updateCityConditionsData(CityConditions cityConditions) {
-        /*Observable.just(cityConditions)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(conditions ->
-                        mRealm.executeTransactionAsync(realm -> realm.insertOrUpdate(conditions)),
-                        Throwable::printStackTrace
-                );*/
         Realm realm = Realm.getDefaultInstance();
-        realm.executeTransactionAsync(realm1 ->
+        realm.executeTransaction(realm1 ->
             realm1.insertOrUpdate(cityConditions)
         );
     }

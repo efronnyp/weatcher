@@ -34,26 +34,27 @@ public class WeatherDataRepository implements BaseDataSource {
     */
     public Observable<List<CityConditions>> getSavedCitiesCondition() {
         return mLocalDataSource.getSavedCitiesConditions()
-            .flatMap(new Func1<List<CityConditions>, Observable<List<CityConditions>>>() {
-                @Override
-                public Observable<List<CityConditions>> call(List<CityConditions> cityConditionsList) {
-                    return Observable.from(cityConditionsList)
-                        .flatMap(new Func1<CityConditions, Observable<CityConditions>>() {
-                            @Override
-                            public Observable<CityConditions> call(CityConditions conditions) {
-                                long dataAge = System.currentTimeMillis() - conditions.lastUpdated;
-                                if (dataAge > CITY_CONDITIONS_EXPIRY) {
-                                    //Have to retrieve again from server if already more than usable age
-                                    DisplayLocation location =
-                                            conditions.currentObservation.display_location;
-                                    return updateConditionsFromRemote(location.latitude, location.longitude,
-                                            conditions.cityId, conditions.currentCity);
-                                } else {
-                                    return Observable.just(conditions);
-                                }
-                            }
-                        }).toList();
-                }
+                .flatMap(new Func1<List<CityConditions>, Observable<List<CityConditions>>>() {
+                    @Override
+                    public Observable<List<CityConditions>> call(List<CityConditions> cityConditionsList) {
+                        return Observable.from(cityConditionsList)
+                                .flatMap(new Func1<CityConditions, Observable<CityConditions>>() {
+                                    @Override
+                                    public Observable<CityConditions> call(CityConditions cityConditions) {
+                                        long dataAge = System.currentTimeMillis() - cityConditions.lastUpdated;
+                                        if (dataAge > CITY_CONDITIONS_EXPIRY) {
+                                            //Have to retrieve again from server if already more than usable age
+                                            DisplayLocation location =
+                                                    cityConditions.currentObservation.display_location;
+                                            return updateConditionsFromRemote(location.latitude, location.longitude,
+                                                    cityConditions.cityId, cityConditions.currentCity);
+                                        } else {
+                                            return Observable.just(cityConditions);
+                                        }
+                                    }
+                                })
+                                .toList();
+                    }
                 });
     }
 
@@ -80,30 +81,50 @@ public class WeatherDataRepository implements BaseDataSource {
     }
 
     /**
+     * Call this function to save current location latitude and longitude. This will create a dummy
+     * {@link CityConditions} record if no current locations yet, so we can use it later to retrieve from API
+     */
+    public void saveCurrentLocation(String currentLatitude, String currentLongitude) {
+        mLocalDataSource.insertOrUpdateCurrentLocation(currentLatitude, currentLongitude);
+    }
+
+    /**
      * Get current location weather conditions.
      */
     public Observable<CityConditions> getCurrentLocationsWeather(String currentLat, String currentLon) {
-        return mLocalDataSource.getCurrentCityConditions()
-            .flatMap(new Func1<CityConditions, Observable<CityConditions>>() {
-                @Override
-                public Observable<CityConditions> call(CityConditions cityConditions) {
-                    if (cityConditions != null) {
-                        long dataAge = System.currentTimeMillis() - cityConditions.lastUpdated;
-                        if (dataAge > CITY_CONDITIONS_EXPIRY) {
-                            return updateConditionsFromRemote(currentLat, currentLon,
-                                    cityConditions.cityId, cityConditions.currentCity);
-                        } else {
-                            return Observable.just(cityConditions);
-                        }
-                    } else {
-                        return mRemoteDataSource.getCityConditions(currentLat, currentLon)
-                                .doOnNext(remoteCityConditions -> {
-                                    remoteCityConditions.currentCity= true;
-                                    mLocalDataSource.saveCityConditionsData(remoteCityConditions);
-                                });
-                    }
-                }
-            });
+        CityConditions currentCity = mLocalDataSource.getCurrentCityConditions();
+
+        if (currentCity == null) {
+            return mRemoteDataSource.getCityConditions(currentLat, currentLon)
+                    .doOnNext(remoteCityConditions -> {
+                        remoteCityConditions.currentCity= true;
+                        mLocalDataSource.saveCityConditionsData(remoteCityConditions);
+                    });
+        } else {
+            long dataAge = System.currentTimeMillis() - currentCity.lastUpdated;
+            if (dataAge > CITY_CONDITIONS_EXPIRY) {
+                return updateConditionsFromRemote(currentLat, currentLon,
+                        currentCity.cityId, true);
+            } else {
+                return Observable.just(currentCity);
+            }
+        }
+
+        /*if (currentCityConditions == null) {
+            return mRemoteDataSource.getCityConditions(currentLat, currentLon)
+                    .doOnNext(remoteCityConditions -> {
+                        remoteCityConditions.currentCity= true;
+                        mLocalDataSource.saveCityConditionsData(remoteCityConditions);
+                    });
+        } else {
+            long dataAge = System.currentTimeMillis() - currentCityConditions.lastUpdated;
+            if (dataAge > CITY_CONDITIONS_EXPIRY) {
+                return updateConditionsFromRemote(currentLat, currentLon,
+                        currentCityConditions.cityId, true).single();
+            } else {
+                return Observable.just(currentCityConditions);
+            }
+        }*/
     }
 
     /**
