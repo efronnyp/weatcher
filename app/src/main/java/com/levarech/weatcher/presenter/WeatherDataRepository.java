@@ -14,7 +14,7 @@ import rx.functions.Func1;
  * otherwise remote data will be downloaded.
  */
 
-public class WeatherDataRepository implements BaseDataSource {
+class WeatherDataRepository implements BaseDataSource {
 
     /**
      * The age of weather conditions data of a city is 10 minutes.
@@ -23,8 +23,8 @@ public class WeatherDataRepository implements BaseDataSource {
     private LocalDataSource mLocalDataSource;
     private RemoteDataSource mRemoteDataSource;
 
-    public WeatherDataRepository(LocalDataSource localDataSource,
-                                 RemoteDataSource remoteDataSource) {
+    WeatherDataRepository(LocalDataSource localDataSource,
+                          RemoteDataSource remoteDataSource) {
         this.mLocalDataSource = localDataSource;
         this.mRemoteDataSource = remoteDataSource;
     }
@@ -32,7 +32,7 @@ public class WeatherDataRepository implements BaseDataSource {
     /**
     * Fetch all saved cities and it's weather conditions data.
     */
-    public Observable<List<CityConditions>> getSavedCitiesCondition() {
+    Observable<List<CityConditions>> getSavedCitiesCondition() {
         return mLocalDataSource.getSavedCitiesConditions()
                 .flatMap(new Func1<List<CityConditions>, Observable<List<CityConditions>>>() {
                     @Override
@@ -53,7 +53,7 @@ public class WeatherDataRepository implements BaseDataSource {
                                         }
                                     }
                                 })
-                                .toList();
+                                .toSortedList((city1, city2) -> city1.currentCity ? -1 : 1);
                     }
                 });
     }
@@ -84,14 +84,14 @@ public class WeatherDataRepository implements BaseDataSource {
      * Call this function to save current location latitude and longitude. This will create a dummy
      * {@link CityConditions} record if no current locations yet, so we can use it later to retrieve from API
      */
-    public void saveCurrentLocation(String currentLatitude, String currentLongitude) {
+    void saveCurrentLocation(String currentLatitude, String currentLongitude) {
         mLocalDataSource.insertOrUpdateCurrentLocation(currentLatitude, currentLongitude);
     }
 
     /**
      * Get current location weather conditions.
      */
-    public Observable<CityConditions> getCurrentLocationsWeather(String currentLat, String currentLon) {
+    Observable<CityConditions> getCurrentLocationsWeather(String currentLat, String currentLon) {
         CityConditions currentCity = mLocalDataSource.getCurrentCityConditions();
 
         if (currentCity == null) {
@@ -130,8 +130,8 @@ public class WeatherDataRepository implements BaseDataSource {
     /**
      * Immediately get the current weather conditions of this city and then save to local.
      */
-    public Observable<CityConditions> getAndSaveNewCityConditions(String currentLatitude,
-                                                                  String currentLongitude) {
+    Observable<CityConditions> getAndSaveNewCityConditions(String currentLatitude,
+                                                           String currentLongitude) {
         return mRemoteDataSource
                 .getCityConditions(currentLatitude, currentLongitude)
                 .doOnNext(conditions -> mLocalDataSource.saveCityConditionsData(conditions));
@@ -141,11 +141,18 @@ public class WeatherDataRepository implements BaseDataSource {
      * Immediately get the current weather conditions of this city by city name and country code,
      * and then save to local.
      */
-    public Observable<CityConditions> getAndSaveNewCityConditionsByName(String countryCode,
-                                                                        String cityName) {
+    Observable<CityConditions> getAndSaveNewCityConditionsByName(String countryCode,
+                                                                 String cityName) {
         return mRemoteDataSource
                 .getCityConditionsByName(countryCode, cityName)
                 .doOnNext(conditions -> mLocalDataSource.saveCityConditionsData(conditions));
+    }
+
+    /**
+     * Delete saved city from database.
+     */
+    void deleteSavedCity(String cityId) {
+        mLocalDataSource.deleteCity(cityId);
     }
 
     /**

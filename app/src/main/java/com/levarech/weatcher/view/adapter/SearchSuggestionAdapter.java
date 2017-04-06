@@ -46,7 +46,7 @@ public class SearchSuggestionAdapter extends
         AutocompletePrediction prediction = mPredictions.get(position);
         holder.rootView.setOnClickListener(view -> {
             if (mItemClickListener != null) {
-                mItemClickListener.onClick(view, position, mPredictions.get(position));
+                mItemClickListener.onClick(view, position, prediction);
             }
         });
         holder.tvPlaceName.setText(prediction.getFullText(null));

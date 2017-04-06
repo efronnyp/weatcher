@@ -38,6 +38,8 @@ public class SavedCityAdapter extends RecyclerView.Adapter<SavedCityAdapter.City
     private List<CityConditions> mCities;
     private Context mContext;
     private Calendar mCalendar;
+    private OnItemClickListener<CityConditions> mItemClickListener;
+    private OnItemLongClickListener<CityConditions> mItemLongClickListener;
 
     public SavedCityAdapter(List<CityConditions> mCities, Context context) {
         this.mCities = new ArrayList<>();
@@ -60,6 +62,19 @@ public class SavedCityAdapter extends RecyclerView.Adapter<SavedCityAdapter.City
         if (BuildConfig.DEBUG) {
             Log.d(TAG, observation.toString());
         }
+
+        holder.rlCardRoot.setOnClickListener(view -> {
+            if (mItemClickListener != null) {
+                mItemClickListener.onClick(view, position, city);
+            }
+        });
+        holder.rlCardRoot.setOnLongClickListener(view -> {
+            if (mItemLongClickListener != null) {
+                mItemLongClickListener.onLongClick(view, position, city);
+                return true;
+            }
+            return false;
+        });
 
         // Set calendar to this city's localtime
         String timezoneStr = observation.local_tz_long;
@@ -111,6 +126,16 @@ public class SavedCityAdapter extends RecyclerView.Adapter<SavedCityAdapter.City
     @Override
     public int getItemCount() {
         return mCities.size();
+    }
+
+    public SavedCityAdapter setOnItemClickListener(OnItemClickListener<CityConditions> listener) {
+        mItemClickListener = listener;
+        return this;
+    }
+
+    public SavedCityAdapter setOnItemLongClickListener(OnItemLongClickListener<CityConditions> listener) {
+        mItemLongClickListener = listener;
+        return this;
     }
 
     public void update(List<CityConditions> newData) {

@@ -18,7 +18,7 @@ import rx.functions.Func1;
  * Controller to manage local weather data using Realm engine.
  */
 
-public class LocalDataSource implements BaseDataSource {
+class LocalDataSource implements BaseDataSource {
 
     private Realm mRealm;
 
@@ -26,7 +26,7 @@ public class LocalDataSource implements BaseDataSource {
         mRealm = Realm.getDefaultInstance();
     }
 
-    public Observable<List<CityConditions>> getSavedCitiesConditions() {
+    Observable<List<CityConditions>> getSavedCitiesConditions() {
         return mRealm.where(CityConditions.class)
                 .findAllSortedAsync("currentCity", Sort.DESCENDING)
                 .asObservable()
@@ -56,7 +56,7 @@ public class LocalDataSource implements BaseDataSource {
                 });*/
     }
 
-    public Observable<CityConditions> getSavedCityConditions(String cityId) {
+    Observable<CityConditions> getSavedCityConditions(String cityId) {
         Realm realm = Realm.getDefaultInstance();
         CityConditions cityConditions = realm.where(CityConditions.class)
                 .equalTo("currentObservation.display_location.latitude", cityId)
@@ -64,7 +64,7 @@ public class LocalDataSource implements BaseDataSource {
         return Observable.just(cityConditions);
     }
 
-    public CityConditions getCurrentCityConditions() {
+    CityConditions getCurrentCityConditions() {
         /*return mRealm.where(CityConditions.class)
                 .equalTo("currentCity", true)
                 .findFirstAsync()
@@ -76,7 +76,7 @@ public class LocalDataSource implements BaseDataSource {
                 .findFirst();
     }
 
-    public void insertOrUpdateCurrentLocation(String currentLatitude, String currentLongitude) {
+    void insertOrUpdateCurrentLocation(String currentLatitude, String currentLongitude) {
         mRealm.executeTransaction(realm -> {
             CityConditions currentCity = realm
                     .where(CityConditions.class)
@@ -96,19 +96,27 @@ public class LocalDataSource implements BaseDataSource {
         });
     }
 
-    public void updateCityConditionsData(CityConditions cityConditions) {
+    void updateCityConditionsData(CityConditions cityConditions) {
         Realm realm = Realm.getDefaultInstance();
         realm.executeTransaction(realm1 ->
             realm1.insertOrUpdate(cityConditions)
         );
     }
 
-    public void saveCityConditionsData(CityConditions cityConditions) {
+    void saveCityConditionsData(CityConditions cityConditions) {
         Realm realm = Realm.getDefaultInstance();
         realm.executeTransaction(realm1 -> {
             cityConditions.cityId = UUID.randomUUID().toString();
             realm1.insert(cityConditions);
         });
+    }
+
+    void deleteCity(String cityId) {
+        mRealm.executeTransaction(realm ->
+                realm.where(CityConditions.class)
+                    .equalTo("cityId", cityId)
+                    .findFirst()
+                    .deleteFromRealm());
     }
 
     @Override

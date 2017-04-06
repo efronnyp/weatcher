@@ -9,4 +9,7 @@
         Do you want to turn GPS on now?
     </string>
     <string name="search_city_hint">Enter city, zip code, or airport location</string>
+    <string name="saving">Saving</string>
+    <string name="please_wait">Please Wait …</string>
+    <string name="delete">Delete</string>
 </resources>

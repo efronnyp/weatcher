@@ -1,5 +1,6 @@
 package com.levarech.weatcher.view.activity;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -60,6 +61,7 @@ public class SearchCityActivity extends AppCompatActivity implements
     private AutocompleteFilter mPlaceFilter;
     private List<AutocompletePrediction> mPredictions;
     private Timer autoCompleteTimer;
+    private ProgressDialog progressDialog;
 
     public static Intent prepareIntent(Context source) {
         return new Intent(source, SearchCityActivity.class);
@@ -98,7 +100,7 @@ public class SearchCityActivity extends AppCompatActivity implements
                         public void run() {
                             onNewQuery(newText);
                         }
-                    }, 2100);
+                    }, 1500);
                 } else {
                     if (mPredictions != null) {
                         mPredictions.clear();
@@ -186,6 +188,11 @@ public class SearchCityActivity extends AppCompatActivity implements
 
     @Override
     public void onClick(View view, int i, AutocompletePrediction selectedPlace) {
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setTitle(R.string.saving);
+        progressDialog.setMessage(getString(R.string.please_wait));
+        progressDialog.show();
+
         /*
          Issue a request to the Places Geo Data API to retrieve a Place object with additional
          details about the place.
@@ -211,10 +218,12 @@ public class SearchCityActivity extends AppCompatActivity implements
                     //}
                 } catch (Exception e) {
                     e.printStackTrace();
+                    progressDialog.dismiss();
                 }
             } else {
                 // Request did not complete successfully
                 Log.e(TAG, "Place query did not complete. Error: " + places.getStatus().toString());
+                progressDialog.dismiss();
             }
             places.release();
         });
@@ -222,6 +231,7 @@ public class SearchCityActivity extends AppCompatActivity implements
 
     @Override
     public void onNewCitySavedSuccessfully(CityConditions conditions) {
+        if (progressDialog != null) progressDialog.dismiss();
         finish();
     }
 

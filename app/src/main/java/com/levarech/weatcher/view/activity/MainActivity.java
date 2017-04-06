@@ -38,8 +38,8 @@ import butterknife.OnClick;
 public class MainActivity extends AppCompatActivity implements WeatherMonitorView, LocationListener {
 
     private static final int TWO_MINUTES = 2 * 60 * 1000;
-    private static final int MIN_LOCATION_TIME = 5000;
-    private static final int MIN_LOCATION_DISTANCE = 5;
+    private static final int MIN_LOCATION_TIME = 60000;
+    private static final int MIN_LOCATION_DISTANCE = 100;
     private static final int LOCATION_REQUEST_CODE = 34;
 
     @BindView(R.id.fab)
@@ -76,11 +76,38 @@ public class MainActivity extends AppCompatActivity implements WeatherMonitorVie
         SavedCityAdapter adapter = (SavedCityAdapter) rvSavedCityList.getAdapter();
         if (adapter == null) { // no adapter yet
             adapter = new SavedCityAdapter(mCityConditionsList, this);
+            adapter.setOnItemClickListener((view, i, data) -> onItemClicked(data))
+                    .setOnItemLongClickListener((view, i, data) -> {
+                        if (!data.currentCity) // everything can be deleted, except the current city
+                            onDeleteItem(data);
+                    });
             rvSavedCityList.setLayoutManager(new LinearLayoutManager(this));
             rvSavedCityList.setAdapter(adapter);
         } else {
             adapter.update(mCityConditionsList);
         }
+    }
+
+    private void onItemClicked(CityConditions data) {
+        // open city detail
+    }
+
+    private void onDeleteItem(CityConditions city) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        CharSequence items[] = new CharSequence[] {getText(R.string.delete), getText(android.R.string.cancel)};
+        builder.setItems(items, (dialogInterface, i) -> {
+            switch (i) {
+                case 0:
+                    // do deletion
+                    mPresenter.deleteSavedCity(city.cityId);
+                    mPresenter.getSavedCitiesCondition();
+                    break;
+                case 1:
+                    break;
+            }
+            dialogInterface.dismiss();
+        });
+        builder.show();
     }
 
     private void getCurrentLocation() {
@@ -182,11 +209,23 @@ public class MainActivity extends AppCompatActivity implements WeatherMonitorVie
     @Override
     protected void onPause() {
         super.onPause();
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED ||
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            mLocationManager.removeUpdates(this);
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED ||
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            mLocationManager.removeUpdates(this);
+        }
         mPresenter.onDestroy();
     }
 
