@@ -38,42 +38,22 @@ class LocalDataSource implements BaseDataSource {
                     }
                 })
                 .first();
-        /*return mRealm.where(CityConditions.class)
-                .equalTo("currentCity", false)
-                .findAllAsync()
-                .asObservable()
-                .filter(new Func1<RealmResults<CityConditions>, Boolean>() {
-                    @Override
-                    public Boolean call(RealmResults<CityConditions> results) {
-                        return results.isLoaded();
-                    }
-                })
-                .flatMap(new Func1<RealmResults<CityConditions>, Observable<List<CityConditions>>>() {
-                    @Override
-                    public Observable<List<CityConditions>> call(RealmResults<CityConditions> cityConditionses) {
-                        return Observable.from(cityConditionses).toList();
-                    }
-                });*/
     }
 
     Observable<CityConditions> getSavedCityConditions(String cityId) {
-        Realm realm = Realm.getDefaultInstance();
-        CityConditions cityConditions = realm.where(CityConditions.class)
-                .equalTo("currentObservation.display_location.latitude", cityId)
+        CityConditions cityConditions = mRealm.where(CityConditions.class)
+                .equalTo("cityId", cityId)
                 .findFirst();
         return Observable.just(cityConditions);
     }
 
-    CityConditions getCurrentCityConditions() {
-        /*return mRealm.where(CityConditions.class)
+    Observable<CityConditions> getCurrentCityConditions() {
+        return mRealm.where(CityConditions.class)
                 .equalTo("currentCity", true)
                 .findFirstAsync()
                 .asObservable()
                 .filter(realmObject -> realmObject.isLoaded())
-                .map(realmObject -> (CityConditions) realmObject);*/
-        return mRealm.where(CityConditions.class)
-                .equalTo("currentCity", true)
-                .findFirst();
+                .map(realmObject -> (CityConditions) realmObject);
     }
 
     void insertOrUpdateCurrentLocation(String currentLatitude, String currentLongitude) {
@@ -101,6 +81,7 @@ class LocalDataSource implements BaseDataSource {
         realm.executeTransaction(realm1 ->
             realm1.insertOrUpdate(cityConditions)
         );
+        realm.close();
     }
 
     void saveCityConditionsData(CityConditions cityConditions) {
@@ -109,6 +90,7 @@ class LocalDataSource implements BaseDataSource {
             cityConditions.cityId = UUID.randomUUID().toString();
             realm1.insert(cityConditions);
         });
+        realm.close();
     }
 
     void deleteCity(String cityId) {

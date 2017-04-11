@@ -30,7 +30,8 @@ public class WeatherPresenter implements Presenter {
     }
 
     /**
-     * Get saved cities including current city weather from local, or refresh it if already old.
+     * Get saved cities including current city weather from local,
+     * or refresh it from remote server if already outdated.
      */
     public void getSavedCitiesCondition() {
         mView.showLoading();
@@ -52,9 +53,12 @@ public class WeatherPresenter implements Presenter {
         mSubscription.add(subscription);
     }
 
+    /**
+    * Save current location and immediately refresh from remote server.
+    */
     public void getCurrentLocationWeather(double currentLatitude, double currentLongitude) {
         mView.showLoading();
-        //mSubscription.clear();
+        mSubscription.clear();
         Subscription subscription = mRepository
                 .getCurrentLocationsWeather(
                         Double.toString(currentLatitude), Double.toString(currentLongitude))
@@ -87,11 +91,11 @@ public class WeatherPresenter implements Presenter {
     /**
      * Get city conditions from API using location detail, and then save it to local.
      */
-    public void saveNewCity(double currentLatitude, double currentLongitude) {
+    public void saveCityByLocation(double latitude, double longitude) {
         mView.showLoading();
         createSubscription(
                 mRepository.getAndSaveNewCityConditions(
-                        Double.toString(currentLatitude), Double.toString(currentLongitude)),
+                        Double.toString(latitude), Double.toString(longitude)),
                 conditions -> ((WeatherAddView) mView).onNewCitySavedSuccessfully(conditions)
         );
     }

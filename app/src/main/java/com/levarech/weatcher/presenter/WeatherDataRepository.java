@@ -92,23 +92,14 @@ class WeatherDataRepository implements BaseDataSource {
      * Get current location weather conditions.
      */
     Observable<CityConditions> getCurrentLocationsWeather(String currentLat, String currentLon) {
-        CityConditions currentCity = mLocalDataSource.getCurrentCityConditions();
-
-        if (currentCity == null) {
-            return mRemoteDataSource.getCityConditions(currentLat, currentLon)
-                    .doOnNext(remoteCityConditions -> {
-                        remoteCityConditions.currentCity= true;
-                        mLocalDataSource.saveCityConditionsData(remoteCityConditions);
-                    });
-        } else {
-            long dataAge = System.currentTimeMillis() - currentCity.lastUpdated;
-            if (dataAge > CITY_CONDITIONS_EXPIRY) {
-                return updateConditionsFromRemote(currentLat, currentLon,
-                        currentCity.cityId, true);
-            } else {
-                return Observable.just(currentCity);
-            }
-        }
+        return mLocalDataSource.getCurrentCityConditions()
+                .flatMap(new Func1<CityConditions, Observable<CityConditions>>() {
+                    @Override
+                    public Observable<CityConditions> call(CityConditions cityConditions) {
+                        return updateConditionsFromRemote(currentLat, currentLon,
+                                cityConditions.cityId, true);
+                    }
+                });
 
         /*if (currentCityConditions == null) {
             return mRemoteDataSource.getCityConditions(currentLat, currentLon)

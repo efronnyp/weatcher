@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.ContentLoadingProgressBar;
@@ -22,6 +23,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.levarech.weatcher.BuildConfig;
 import com.levarech.weatcher.R;
 import com.levarech.weatcher.model.local.CityConditions;
 import com.levarech.weatcher.presenter.WeatherPresenter;
@@ -37,6 +39,7 @@ import butterknife.OnClick;
 
 public class MainActivity extends AppCompatActivity implements WeatherMonitorView, LocationListener {
 
+    private static final String TAG = "MainActivity";
     private static final int TWO_MINUTES = 2 * 60 * 1000;
     private static final int MIN_LOCATION_TIME = 60000;
     private static final int MIN_LOCATION_DISTANCE = 100;
@@ -111,14 +114,13 @@ public class MainActivity extends AppCompatActivity implements WeatherMonitorVie
     }
 
     private void getCurrentLocation() {
-        Location newLocation = null;
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
                 if (mLocationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-                    newLocation = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                    if (newLocation == null) {
+                    mCurrentLocation = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    if (mCurrentLocation == null) {
                         mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
                                 MIN_LOCATION_TIME, MIN_LOCATION_DISTANCE, this);
                     }
@@ -136,26 +138,22 @@ public class MainActivity extends AppCompatActivity implements WeatherMonitorVie
 
             if (isNetworkEnabled || isGpsEnabled) {
                 if (isGpsEnabled) {
-                    newLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                     mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                             MIN_LOCATION_TIME, MIN_LOCATION_DISTANCE, this);
+                    mCurrentLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                 }
 
-                if (isNetworkEnabled && newLocation == null) {
-                    newLocation = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                if (isNetworkEnabled && mCurrentLocation == null) {
                     mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
                             MIN_LOCATION_TIME, MIN_LOCATION_DISTANCE, this);
+                    mCurrentLocation = mLocationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                 }
             } else {
                 showTurnOnGpsDialog();
             }
         }
 
-        if (newLocation != null &&
-                (mCurrentLocation == null ||
-                newLocation.getLatitude() != mCurrentLocation.getLatitude() ||
-                newLocation.getLongitude() != mCurrentLocation.getLongitude())) {
-            mCurrentLocation = newLocation;
+        if (mCurrentLocation != null) {
             mPresenter.saveCurrentLocation(mCurrentLocation.getLatitude(),
                     mCurrentLocation.getLongitude());
         }
@@ -166,6 +164,11 @@ public class MainActivity extends AppCompatActivity implements WeatherMonitorVie
             return true;
         }
 
+        int distanceDiff = (int) oldLocation.distanceTo(newLocation);
+        if (distanceDiff < MIN_LOCATION_DISTANCE) {
+            // new location is only few meters from old location
+            return false;
+        }
         int timeDiff = (int) (newLocation.getTime() - oldLocation.getTime());
         if (timeDiff > TWO_MINUTES) {
             // new location is newer
@@ -176,7 +179,15 @@ public class MainActivity extends AppCompatActivity implements WeatherMonitorVie
         }
 
         int accuracyDiff = (int) (newLocation.getAccuracy() - oldLocation.getAccuracy());
-        return accuracyDiff < 0 || (timeDiff > 0 && accuracyDiff < 200);
+        if (accuracyDiff < 0) {
+            // new location is more accurate
+            return true;
+        } else if (accuracyDiff > 200) {
+            // new location is significantly less accurate than old location
+            return false;
+        }
+
+        return timeDiff > 0;
     }
 
     private void showTurnOnGpsDialog() {
@@ -288,9 +299,16 @@ public class MainActivity extends AppCompatActivity implements WeatherMonitorVie
 
     @Override
     public void onLocationChanged(Location location) {
-        if (location != null && isNewLocationBetter(location, mCurrentLocation)) {
-            mCurrentLocation = location;
-            mPresenter.saveCurrentLocation(location.getLatitude(), location.getLongitude());
+        if (location != null) {
+            if (isNewLocationBetter(location, mCurrentLocation)) {
+                mCurrentLocation = location;
+                if (BuildConfig.DEBUG) {
+                    String message = "Better location received. Setting forceUpdate to true";
+                    Snackbar.make(fab, message, Snackbar.LENGTH_LONG).show();
+                    Log.d(TAG, message);
+                }
+                mPresenter.getCurrentLocationWeather(location.getLatitude(), location.getLongitude());
+            }
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED ||
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)

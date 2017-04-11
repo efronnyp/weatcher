@@ -100,7 +100,7 @@ public class SearchCityActivity extends AppCompatActivity implements
                         public void run() {
                             onNewQuery(newText);
                         }
-                    }, 1500);
+                    }, 1000);
                 } else {
                     if (mPredictions != null) {
                         mPredictions.clear();
@@ -214,7 +214,7 @@ public class SearchCityActivity extends AppCompatActivity implements
                     /*if (countryCode != null && cityName != null) {
                         mPresenter.saveCityByName(countryCode, cityName);
                     } else {*/
-                        mPresenter.saveNewCity(lat, lon);
+                        mPresenter.saveCityByLocation(lat, lon);
                     //}
                 } catch (Exception e) {
                     e.printStackTrace();
