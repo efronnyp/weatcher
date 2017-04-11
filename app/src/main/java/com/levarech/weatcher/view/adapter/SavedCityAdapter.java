@@ -37,7 +37,6 @@ public class SavedCityAdapter extends RecyclerView.Adapter<SavedCityAdapter.City
 
     private List<CityConditions> mCities;
     private Context mContext;
-    private Calendar mCalendar;
     private OnItemClickListener<CityConditions> mItemClickListener;
     private OnItemLongClickListener<CityConditions> mItemLongClickListener;
 
@@ -45,7 +44,6 @@ public class SavedCityAdapter extends RecyclerView.Adapter<SavedCityAdapter.City
         this.mCities = new ArrayList<>();
         this.mCities.addAll(mCities);
         this.mContext = context;
-        this.mCalendar = Calendar.getInstance();
     }
 
     @Override
@@ -81,10 +79,10 @@ public class SavedCityAdapter extends RecyclerView.Adapter<SavedCityAdapter.City
         if (timezoneStr == null) {
             timezoneStr = observation.local_tz_short;
         }
-        mCalendar = new GregorianCalendar(TimeZone.getTimeZone(timezoneStr));
+        Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone(timezoneStr));
         DateFormat formatter = SimpleDateFormat.getTimeInstance(DateFormat.SHORT);
         formatter.setTimeZone(TimeZone.getTimeZone(timezoneStr));
-        String localTime = formatter.format(mCalendar.getTime());
+        String localTime = formatter.format(calendar.getTime());
         holder.tvLocalTime.setText(localTime);
 
         holder.ivCurrentLocationIcon.setVisibility(city.currentCity ? View.VISIBLE :View.GONE);
@@ -93,7 +91,7 @@ public class SavedCityAdapter extends RecyclerView.Adapter<SavedCityAdapter.City
 
         // Set card background
         int drawableResId = 0;
-        int hourOfDay = mCalendar.get(Calendar.HOUR_OF_DAY);
+        int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
         boolean isNight = (hourOfDay > 17) || (hourOfDay < 6);
         switch (observation.icon) {
             case "cloudy":
