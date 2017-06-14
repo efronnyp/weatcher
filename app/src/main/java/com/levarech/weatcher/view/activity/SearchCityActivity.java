@@ -127,7 +127,8 @@ public class SearchCityActivity extends AppCompatActivity implements
     private void onNewQuery(final String query) {
         new Thread(() -> {
             mPredictions = getAutocomplete(query);
-            runOnUiThread(this::setupRecyclerView);
+            if (mPredictions != null)
+                runOnUiThread(this::setupRecyclerView);
         }).start();
     }
 

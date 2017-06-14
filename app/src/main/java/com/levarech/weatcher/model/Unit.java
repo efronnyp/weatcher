@@ -7,7 +7,7 @@ import io.realm.RealmObject;
  * Unit that represents temperature in degree celsius and degree fahrenheit
  */
 
-class Unit extends RealmObject {
+public class Unit extends RealmObject {
     public String english;
     public String metric;
 }

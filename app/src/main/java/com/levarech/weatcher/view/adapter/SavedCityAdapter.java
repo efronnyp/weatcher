@@ -119,6 +119,25 @@ public class SavedCityAdapter extends RecyclerView.Adapter<SavedCityAdapter.City
                 drawableResId = R.drawable.other_fog;
         }
         holder.rlCardRoot.setBackgroundResource(drawableResId);
+        int defaultCardHeight = mContext.getResources().getDimensionPixelSize(R.dimen.city_card_height);
+        int defaultCardPadding = mContext.getResources().getDimensionPixelSize(R.dimen.city_card_padding);
+        if (position == 0) {
+            int resId = mContext.getResources().getIdentifier("status_bar_height", "dimen", "android");
+            if (resId > 0) {
+                int statusBarHeight = mContext.getResources().getDimensionPixelSize(resId);
+                holder.rlCardRoot.setPadding(defaultCardPadding, (int) (1.5*statusBarHeight),
+                        defaultCardPadding, defaultCardPadding);
+                if (holder.rlCardRoot.getLayoutParams().height == defaultCardHeight) {
+                    holder.rlCardRoot.getLayoutParams().height = defaultCardHeight + statusBarHeight;
+                    holder.rlCardRoot.requestLayout();
+                }
+            }
+        } else {
+            holder.rlCardRoot.setPadding(defaultCardPadding, defaultCardPadding,
+                    defaultCardPadding, defaultCardPadding);
+            holder.rlCardRoot.getLayoutParams().height = defaultCardHeight;
+            holder.rlCardRoot.requestLayout();
+        }
     }
 
     @Override

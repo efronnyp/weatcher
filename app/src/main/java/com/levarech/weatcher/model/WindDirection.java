@@ -7,7 +7,7 @@ import io.realm.RealmObject;
  * Wind Direction information.
  */
 
-class WindDirection extends RealmObject {
+public class WindDirection extends RealmObject {
     public String dir;
     public String degrees;
 }

@@ -7,7 +7,7 @@ import io.realm.RealmObject;
  * FCTTIME model class, appeared on HourlyForecast response.
  */
 
-class FCTTIME extends RealmObject {
+public class FCTTIME extends RealmObject {
     public String hour;
     public String hour_padded;
     public String min;
