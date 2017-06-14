@@ -41,7 +41,7 @@ class WeatherDataRepository implements BaseDataSource {
                                 .flatMap(new Func1<CityConditions, Observable<CityConditions>>() {
                                     @Override
                                     public Observable<CityConditions> call(CityConditions cityConditions) {
-                                        long dataAge = System.currentTimeMillis() - cityConditions.lastUpdated;
+                                        long dataAge = System.currentTimeMillis() - cityConditions.observationTimestamp;
                                         if (dataAge > CITY_CONDITIONS_EXPIRY) {
                                             //Have to retrieve again from server if already more than usable age
                                             DisplayLocation location =
@@ -66,7 +66,7 @@ class WeatherDataRepository implements BaseDataSource {
                 .flatMap(new Func1<CityConditions, Observable<CityConditions>>() {
                     @Override
                     public Observable<CityConditions> call(CityConditions cityConditions) {
-                        long dataAge = System.currentTimeMillis() - cityConditions.lastUpdated;
+                        long dataAge = System.currentTimeMillis() - cityConditions.observationTimestamp;
                         if (dataAge > CITY_CONDITIONS_EXPIRY) {
                             //To old to eat a peanut?
                             DisplayLocation location =
@@ -108,7 +108,7 @@ class WeatherDataRepository implements BaseDataSource {
                         mLocalDataSource.saveCityConditionsData(remoteCityConditions);
                     });
         } else {
-            long dataAge = System.currentTimeMillis() - currentCityConditions.lastUpdated;
+            long dataAge = System.currentTimeMillis() - currentCityConditions.observationTimestamp;
             if (dataAge > CITY_CONDITIONS_EXPIRY) {
                 return updateConditionsFromRemote(currentLat, currentLon,
                         currentCityConditions.cityId, true).single();

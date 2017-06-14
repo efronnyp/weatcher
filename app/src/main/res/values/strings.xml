@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Weathcher</string>
+    <string name="app_name">Weatcher</string>
     <string name="action_settings">Settings</string>
     <string name="action_cancel">Cancel</string>
 
@@ -12,4 +12,7 @@
     <string name="saving">Saving</string>
     <string name="please_wait">Please Wait …</string>
     <string name="delete">Delete</string>
+    <string name="today">Today</string>
+
+    <string name="weather_icon_description">Weather Icon Image</string>
 </resources>

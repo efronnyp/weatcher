@@ -1,6 +1,7 @@
 package com.levarech.weatcher.view.activity;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -36,12 +37,13 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class MainActivity extends AppCompatActivity implements WeatherMonitorView, LocationListener {
 
     private static final String TAG = "MainActivity";
     private static final int TWO_MINUTES = 2 * 60 * 1000;
-    private static final int MIN_LOCATION_TIME = 60000;
+    private static final int MIN_LOCATION_TIME = 5000;
     private static final int MIN_LOCATION_DISTANCE = 100;
     private static final int LOCATION_REQUEST_CODE = 34;
 
@@ -73,6 +75,11 @@ public class MainActivity extends AppCompatActivity implements WeatherMonitorVie
         mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         mCityConditionsList = new ArrayList<>();
         mPresenter = new WeatherPresenter(this, this);
+    }
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
     }
 
     private void setUpRecyclerView() {

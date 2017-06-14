@@ -53,7 +53,8 @@ class LocalDataSource implements BaseDataSource {
                 .findFirstAsync()
                 .asObservable()
                 .filter(realmObject -> realmObject.isLoaded())
-                .map(realmObject -> (CityConditions) realmObject);
+                .map(realmObject -> (CityConditions) realmObject)
+                .first();
     }
 
     void insertOrUpdateCurrentLocation(String currentLatitude, String currentLongitude) {

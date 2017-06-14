@@ -6,4 +6,5 @@
 
     <color name="search_box_bg_color">#232929</color>
     <color name="suggestion_list_bg_color">#e4dede</color>
+    <color name="white_alpha_x80">#80ffffff</color>
 </resources>
