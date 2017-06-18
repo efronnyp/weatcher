@@ -7,6 +7,8 @@ import com.levarech.weatcher.model.local.CityConditions;
 import java.util.List;
 import java.util.UUID;
 
+import javax.inject.Inject;
+
 import io.realm.Realm;
 import io.realm.RealmResults;
 import io.realm.Sort;
@@ -22,6 +24,7 @@ class LocalDataSource implements BaseDataSource {
 
     private Realm mRealm;
 
+    @Inject
     LocalDataSource() {
         mRealm = Realm.getDefaultInstance();
     }

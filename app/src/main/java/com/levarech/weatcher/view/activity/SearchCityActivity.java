@@ -26,6 +26,8 @@ import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.PlaceBuffer;
 import com.google.android.gms.location.places.Places;
 import com.levarech.weatcher.R;
+import com.levarech.weatcher.internal.di.components.DaggerActivityComponent;
+import com.levarech.weatcher.internal.di.modules.ActivityModule;
 import com.levarech.weatcher.model.local.CityConditions;
 import com.levarech.weatcher.presenter.WeatherPresenter;
 import com.levarech.weatcher.view.WeatherAddView;
@@ -37,6 +39,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+
+import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -56,7 +60,7 @@ public class SearchCityActivity extends AppCompatActivity implements
     @BindView(R.id.searchView) SearchView searchView;
     @BindView(R.id.rvCitySuggestions) RecyclerView rvCitySuggestions;
 
-    private WeatherPresenter mPresenter;
+    @Inject WeatherPresenter mPresenter;
     private GoogleApiClient mGoogleApiClient;
     private AutocompleteFilter mPlaceFilter;
     private List<AutocompletePrediction> mPredictions;
@@ -73,8 +77,9 @@ public class SearchCityActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_search_city);
 
         ButterKnife.bind(this);
+        initInjector();
 
-        mPresenter = new WeatherPresenter(this, this);
+        mPresenter.setView(this);
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .enableAutoManage(this, 0, this)
                 .addApi(Places.GEO_DATA_API)
@@ -110,6 +115,14 @@ public class SearchCityActivity extends AppCompatActivity implements
                 return true;
             }
         });
+    }
+
+    private void initInjector() {
+        DaggerActivityComponent
+                .builder()
+                .activityModule(new ActivityModule(this))
+                .build()
+                .inject(this);
     }
 
     private void setupRecyclerView() {
