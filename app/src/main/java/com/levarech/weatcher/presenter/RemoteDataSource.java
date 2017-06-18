@@ -9,6 +9,8 @@ import com.levarech.weatcher.model.local.CityConditions;
 
 import java.util.List;
 
+import javax.inject.Inject;
+
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -24,6 +26,7 @@ class RemoteDataSource implements BaseDataSource {
 
     private WeatherAPI weatherAPI;
 
+    @Inject
     RemoteDataSource(Context context) {
         String url = WeatherAPI.WEATHER_API_URL
                 .replace("{api_key}", context.getString(R.string.wunderground_api_key));

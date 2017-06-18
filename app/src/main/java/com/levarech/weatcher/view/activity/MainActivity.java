@@ -26,6 +26,8 @@ import android.widget.Toast;
 
 import com.levarech.weatcher.BuildConfig;
 import com.levarech.weatcher.R;
+import com.levarech.weatcher.internal.di.components.DaggerActivityComponent;
+import com.levarech.weatcher.internal.di.modules.ActivityModule;
 import com.levarech.weatcher.model.local.CityConditions;
 import com.levarech.weatcher.presenter.WeatherPresenter;
 import com.levarech.weatcher.view.WeatherMonitorView;
@@ -33,6 +35,8 @@ import com.levarech.weatcher.view.adapter.SavedCityAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -54,7 +58,8 @@ public class MainActivity extends AppCompatActivity implements WeatherMonitorVie
     @BindView(R.id.loadingProgressBar)
     ContentLoadingProgressBar loadingProgressBar;
 
-    private WeatherPresenter mPresenter;
+    @Inject
+    WeatherPresenter mPresenter;
     private List<CityConditions> mCityConditionsList;
     private LocationManager mLocationManager;
     private Location mCurrentLocation;
@@ -71,15 +76,24 @@ public class MainActivity extends AppCompatActivity implements WeatherMonitorVie
         }
 
         ButterKnife.bind(this);
+        initInjector();
 
         mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         mCityConditionsList = new ArrayList<>();
-        mPresenter = new WeatherPresenter(this, this);
+        mPresenter.setView(this);
     }
 
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
+    }
+
+    private void initInjector() {
+        DaggerActivityComponent
+                .builder()
+                .activityModule(new ActivityModule(this))
+                .build()
+                .inject(this);
     }
 
     private void setUpRecyclerView() {

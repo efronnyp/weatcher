@@ -1,10 +1,10 @@
 package com.levarech.weatcher.presenter;
 
-import android.content.Context;
-
 import com.levarech.weatcher.view.BaseView;
 import com.levarech.weatcher.view.WeatherAddView;
 import com.levarech.weatcher.view.WeatherMonitorView;
+
+import javax.inject.Inject;
 
 import rx.Observable;
 import rx.Subscription;
@@ -21,12 +21,18 @@ public class WeatherPresenter implements Presenter {
 
     private BaseView mView;
     private CompositeSubscription mSubscription;
-    private WeatherDataRepository mRepository;
+    @Inject WeatherDataRepository mRepository;
 
-    public WeatherPresenter(BaseView view, Context context) {
-        this.mView = view;
+    @Inject
+    public WeatherPresenter() {
         mSubscription = new CompositeSubscription();
-        mRepository = new WeatherDataRepository(new LocalDataSource(), new RemoteDataSource(context));
+    }
+
+    /**
+     * Bind View controller with this presenter
+     */
+    public void setView(BaseView view) {
+        mView = view;
     }
 
     /**

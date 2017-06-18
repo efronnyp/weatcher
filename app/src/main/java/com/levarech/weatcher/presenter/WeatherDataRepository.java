@@ -5,6 +5,8 @@ import com.levarech.weatcher.model.local.CityConditions;
 
 import java.util.List;
 
+import javax.inject.Inject;
+
 import rx.Observable;
 import rx.functions.Func1;
 
@@ -23,6 +25,7 @@ class WeatherDataRepository implements BaseDataSource {
     private LocalDataSource mLocalDataSource;
     private RemoteDataSource mRemoteDataSource;
 
+    @Inject
     WeatherDataRepository(LocalDataSource localDataSource,
                           RemoteDataSource remoteDataSource) {
         this.mLocalDataSource = localDataSource;
