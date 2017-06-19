@@ -9,3 +9,5 @@ This project is using these powerful library
 * Realm
 * RxJava
 * Google Places
+* Calligraphy
+* Dagger2
