@@ -17,7 +17,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.ContentLoadingProgressBar;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -26,11 +25,11 @@ import android.widget.Toast;
 
 import com.levarech.weatcher.BuildConfig;
 import com.levarech.weatcher.R;
+import com.levarech.weatcher.domain.city.CityCondition;
 import com.levarech.weatcher.internal.di.components.DaggerActivityComponent;
 import com.levarech.weatcher.internal.di.modules.ActivityModule;
-import com.levarech.weatcher.model.local.CityConditions;
-import com.levarech.weatcher.presenter.WeatherPresenter;
-import com.levarech.weatcher.view.WeatherMonitorView;
+import com.levarech.weatcher.presenter.CityListContract;
+import com.levarech.weatcher.view.BaseActivity;
 import com.levarech.weatcher.view.adapter.SavedCityAdapter;
 
 import java.util.ArrayList;
@@ -43,7 +42,8 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
-public class MainActivity extends AppCompatActivity implements WeatherMonitorView, LocationListener {
+public class MainActivity extends BaseActivity
+        implements CityListContract.View, LocationListener {
 
     private static final String TAG = "MainActivity";
     private static final int TWO_MINUTES = 2 * 60 * 1000;
@@ -58,9 +58,8 @@ public class MainActivity extends AppCompatActivity implements WeatherMonitorVie
     @BindView(R.id.loadingProgressBar)
     ContentLoadingProgressBar loadingProgressBar;
 
-    @Inject
-    WeatherPresenter mPresenter;
-    private List<CityConditions> mCityConditionsList;
+    @Inject CityListContract.Presenter mPresenter;
+    private List<CityCondition> mCityConditionsList;
     private LocationManager mLocationManager;
     private Location mCurrentLocation;
 
@@ -89,11 +88,11 @@ public class MainActivity extends AppCompatActivity implements WeatherMonitorVie
     }
 
     private void initInjector() {
-        DaggerActivityComponent
-                .builder()
+        DaggerActivityComponent.builder()
+                .applicationComponent(getApplicationComponent())
                 .activityModule(new ActivityModule(this))
                 .build()
-                .inject(this);
+                .injek(this);
     }
 
     private void setUpRecyclerView() {
@@ -102,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements WeatherMonitorVie
             adapter = new SavedCityAdapter(mCityConditionsList, this);
             adapter.setOnItemClickListener((view, i, data) -> onItemClicked(data))
                     .setOnItemLongClickListener((view, i, data) -> {
-                        if (!data.currentCity) // everything can be deleted, except the current city
+                        if (!data.isCurrentCity()) // everything can be deleted, except the current city
                             onDeleteItem(data);
                     });
             rvSavedCityList.setLayoutManager(new LinearLayoutManager(this));
@@ -112,19 +111,19 @@ public class MainActivity extends AppCompatActivity implements WeatherMonitorVie
         }
     }
 
-    private void onItemClicked(CityConditions data) {
+    private void onItemClicked(CityCondition data) {
         // open city detail
     }
 
-    private void onDeleteItem(CityConditions city) {
+    private void onDeleteItem(CityCondition city) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         CharSequence items[] = new CharSequence[] {getText(R.string.delete), getText(android.R.string.cancel)};
         builder.setItems(items, (dialogInterface, i) -> {
             switch (i) {
                 case 0:
                     // do deletion
-                    mPresenter.deleteSavedCity(city.cityId);
-                    mPresenter.getSavedCitiesCondition();
+                    mPresenter.deleteSavedCity(city.getCityId());
+                    mPresenter.getSavedCityCondition();
                     break;
                 case 1:
                     break;
@@ -175,7 +174,7 @@ public class MainActivity extends AppCompatActivity implements WeatherMonitorVie
         }
 
         if (mCurrentLocation != null) {
-            mPresenter.saveCurrentLocation(mCurrentLocation.getLatitude(),
+            mPresenter.getCurrentLocationWeather(mCurrentLocation.getLatitude(),
                     mCurrentLocation.getLongitude());
         }
     }
@@ -235,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements WeatherMonitorVie
     protected void onResume() {
         super.onResume();
         getCurrentLocation();
-        mPresenter.getSavedCitiesCondition();
+        mPresenter.getSavedCityCondition();
     }
 
     @Override
@@ -282,23 +281,23 @@ public class MainActivity extends AppCompatActivity implements WeatherMonitorVie
     }
 
     @Override
-    public void onReceivedCityList(List<CityConditions> citiesConditions) {
+    public void onReceivedCityList(List<CityCondition> cityConditionList) {
         if (mCityConditionsList.size() > 0) {
             mCityConditionsList.clear();
-            mCityConditionsList.addAll(citiesConditions);
+            mCityConditionsList.addAll(cityConditionList);
         } else {
-            mCityConditionsList.addAll(citiesConditions);
+            mCityConditionsList.addAll(cityConditionList);
         }
         setUpRecyclerView();
     }
 
     @Override
-    public void onReceivedCurrentLocationConditions(CityConditions conditions) {
+    public void onReceivedCurrentLocationConditions(CityCondition cityCondition) {
         if (mCityConditionsList.size() > 0 &&
-                mCityConditionsList.get(0).currentCity) {
+                mCityConditionsList.get(0).isCurrentCity()) {
             mCityConditionsList.remove(0);
         }
-        mCityConditionsList.add(0, conditions);
+        mCityConditionsList.add(0, cityCondition);
         setUpRecyclerView();
     }
 

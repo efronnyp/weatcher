@@ -1,7 +1,14 @@
 package com.levarech.weatcher.internal.di.modules;
 
-import android.app.Activity;
 import android.content.Context;
+
+import com.levarech.weatcher.data.city.repository.CityDataRepository;
+import com.levarech.weatcher.domain.city.repository.CityRepository;
+import com.levarech.weatcher.presenter.AddNewCityContract;
+import com.levarech.weatcher.presenter.AddNewCityPresenter;
+import com.levarech.weatcher.presenter.CityListContract;
+import com.levarech.weatcher.presenter.CityListPresenter;
+import com.levarech.weatcher.view.BaseActivity;
 
 import dagger.Module;
 import dagger.Provides;
@@ -12,12 +19,27 @@ import dagger.Provides;
  */
 @Module
 public class ActivityModule {
-    private final Activity activity;
+    private final BaseActivity activity;
 
-    public ActivityModule(Activity activity) {
+    public ActivityModule(BaseActivity activity) {
         this.activity = activity;
     }
 
     @Provides
     Context provideContext() { return activity; }
+
+    @Provides
+    CityListContract.Presenter provideCityListPresenter(CityListPresenter presenter) {
+        return presenter;
+    }
+
+    @Provides
+    AddNewCityContract.Presenter provideAddNewCityPresenter(AddNewCityPresenter presenter) {
+        return presenter;
+    }
+
+    @Provides
+    CityRepository provideCityRepository(CityDataRepository cityDataRepository) {
+        return cityDataRepository;
+    }
 }

@@ -1,13 +1,14 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
+apply from: 'buildconfig/dependencies.gradle'
 
 buildscript {
     repositories {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.3'
+        classpath 'com.android.tools.build:gradle:2.3.3'
         classpath 'me.tatarka:gradle-retrolambda:3.4.0'
-        classpath 'io.realm:realm-gradle-plugin:3.0.0'
+        classpath 'io.realm:realm-gradle-plugin:3.5.0'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -18,23 +19,16 @@ allprojects {
     repositories {
         jcenter()
     }
+
+    ext {
+        applicationName = "Weatcher"
+        applicationId = "com.levarech.weatcher"
+        versionCode = 1
+        versionName = "1.0"
+        testInstrumentationRunner = "android.support.test.runner.AndroidJUnitRunner"
+    }
 }
 
 task clean(type: Delete) {
     delete rootProject.buildDir
-}
-
-ext {
-    //Libs version
-    retrofitVersion = '2.2.0'
-    multidexVersion = '1.0.1'
-    supportLibraryVersion = '25.3.1'
-    glideVersion = '3.7.0'
-    butterKnifeVersion = '8.5.1'
-    junitVersion = '4.12'
-    rxAndroidVersion = '1.2.1'
-    rxJavaVersion = '1.2.7'
-    daggerVersion = '2.9'
-    playServiceVersion = '9.6.1'
-    calligraphyVersion = '2.2.0'
 }

@@ -2,7 +2,6 @@ package com.levarech.weatcher.view.adapter;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,10 +9,8 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.levarech.weatcher.BuildConfig;
 import com.levarech.weatcher.R;
-import com.levarech.weatcher.model.CurrentObservation;
-import com.levarech.weatcher.model.local.CityConditions;
+import com.levarech.weatcher.domain.city.CityCondition;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -35,14 +32,14 @@ public class SavedCityAdapter extends RecyclerView.Adapter<SavedCityAdapter.City
 
     private static final String TAG = "CityListViewAdapter";
 
-    private List<CityConditions> mCities;
+    private List<CityCondition> mCities;
     private Context mContext;
-    private OnItemClickListener<CityConditions> mItemClickListener;
-    private OnItemLongClickListener<CityConditions> mItemLongClickListener;
+    private OnItemClickListener<CityCondition> mItemClickListener;
+    private OnItemLongClickListener<CityCondition> mItemLongClickListener;
 
-    public SavedCityAdapter(List<CityConditions> mCities, Context context) {
+    public SavedCityAdapter(List<CityCondition> cityConditionList, Context context) {
         this.mCities = new ArrayList<>();
-        this.mCities.addAll(mCities);
+        this.mCities.addAll(cityConditionList);
         this.mContext = context;
     }
 
@@ -54,12 +51,11 @@ public class SavedCityAdapter extends RecyclerView.Adapter<SavedCityAdapter.City
 
     @Override
     public void onBindViewHolder(CityViewHolder holder, int position) {
-        CityConditions city = mCities.get(position);
-        CurrentObservation observation = city.currentObservation;
+        CityCondition city = mCities.get(position);
 
-        if (BuildConfig.DEBUG) {
+        /*if (BuildConfig.DEBUG) {
             Log.d(TAG, observation.toString());
-        }
+        }*/
 
         holder.rlCardRoot.setOnClickListener(view -> {
             if (mItemClickListener != null) {
@@ -75,9 +71,9 @@ public class SavedCityAdapter extends RecyclerView.Adapter<SavedCityAdapter.City
         });
 
         // Set calendar to this city's localtime
-        String timezoneStr = observation.local_tz_long;
+        String timezoneStr = city.getLocalTzLong();
         if (timezoneStr == null) {
-            timezoneStr = observation.local_tz_short;
+            timezoneStr = city.getLocalTzShort();
         }
         Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone(timezoneStr));
         DateFormat formatter = SimpleDateFormat.getTimeInstance(DateFormat.SHORT);
@@ -85,15 +81,15 @@ public class SavedCityAdapter extends RecyclerView.Adapter<SavedCityAdapter.City
         String localTime = formatter.format(calendar.getTime());
         holder.tvLocalTime.setText(localTime);
 
-        holder.ivCurrentLocationIcon.setVisibility(city.currentCity ? View.VISIBLE :View.GONE);
-        holder.tvDisplayName.setText(observation.display_location.city);
-        holder.tvCurrentTemperature.setText(String.format("%s°", observation.temp_c));
+        holder.ivCurrentLocationIcon.setVisibility(city.isCurrentCity() ? View.VISIBLE :View.GONE);
+        holder.tvDisplayName.setText(city.getCityName());
+        holder.tvCurrentTemperature.setText(String.format("%s°", city.getTempC()));
 
         // Set card background
         int drawableResId = 0;
         int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
         boolean isNight = (hourOfDay > 17) || (hourOfDay < 6);
-        switch (observation.icon) {
+        switch (city.getIcon()) {
             case "cloudy":
                 drawableResId = isNight ? R.drawable.night_cloudy_partly : R.drawable.day_cloudy;
                 break;
@@ -145,17 +141,17 @@ public class SavedCityAdapter extends RecyclerView.Adapter<SavedCityAdapter.City
         return mCities.size();
     }
 
-    public SavedCityAdapter setOnItemClickListener(OnItemClickListener<CityConditions> listener) {
+    public SavedCityAdapter setOnItemClickListener(OnItemClickListener<CityCondition> listener) {
         mItemClickListener = listener;
         return this;
     }
 
-    public SavedCityAdapter setOnItemLongClickListener(OnItemLongClickListener<CityConditions> listener) {
+    public SavedCityAdapter setOnItemLongClickListener(OnItemLongClickListener<CityCondition> listener) {
         mItemLongClickListener = listener;
         return this;
     }
 
-    public void update(List<CityConditions> newData) {
+    public void update(List<CityCondition> newData) {
         mCities.clear();
         mCities.addAll(newData);
         notifyDataSetChanged();

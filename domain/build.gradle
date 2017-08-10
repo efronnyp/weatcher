@@ -1,0 +1,34 @@
+apply plugin: 'com.android.library'
+
+android {
+    def globalConfig = rootProject.extensions.getByName("ext")
+
+    compileSdkVersion globalConfig['compileSdkVersion']
+    buildToolsVersion globalConfig['buildToolsVersion']
+
+    defaultConfig {
+        minSdkVersion globalConfig['minSdkVersion']
+        targetSdkVersion globalConfig['targetSdkVersion']
+        versionCode globalConfig['versionCode']
+        versionName globalConfig['versionName']
+
+        testInstrumentationRunner globalConfig['testInstrumentationRunner']
+    }
+    buildTypes {
+        debug {
+            debuggable true
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    publishNonDefault true
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    rootProject.ext.domainDependencies.each {
+        add(it.configuration, it.dependency, it.closure)
+    }
+}

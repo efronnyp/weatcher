@@ -1,0 +1,92 @@
+ext {
+    //Android config
+    compileSdkVersion = 25
+    buildToolsVersion = "25.0.2"
+    minSdkVersion = 14
+    targetSdkVersion = 25
+
+    //Libs version
+    junitVersion = '4.12'
+    espressoVersion = '2.2.2'
+    retrofitVersion = '2.2.0'
+    multidexVersion = '1.0.1'
+    supportLibraryVersion = '25.3.1'
+    glideVersion = '3.7.0'
+    butterKnifeVersion = '8.5.1'
+    rxAndroidVersion = '1.2.1'
+    rxJavaVersion = '1.2.7'
+    daggerVersion = '2.9'
+    playServiceVersion = '11.0.4'
+    calligraphyVersion = '2.2.0'
+
+    def androidLibs = [
+        appcompatv7 : [group: 'com.android.support', name: 'appcompat-v7', version: supportLibraryVersion],
+        design : [group: 'com.android.support', name: 'design', version: supportLibraryVersion],
+        cardView : [group: 'com.android.support', name: 'cardview-v7', version: supportLibraryVersion],
+        multidex : [group: 'com.android.support', name: 'multidex', version: multidexVersion],
+        supportAnnotation : [group: 'com.android.support', name: 'support-annotations', version: supportLibraryVersion],
+        espresso: [group: 'com.android.support.test.espresso', name: 'espresso-core', version: espressoVersion],
+    ]
+
+    def extLibs = [
+        playServicesLocation : [group: 'com.google.android.gms', name: 'play-services-location', version: playServiceVersion],
+        playServicesPlaces : [group: 'com.google.android.gms', name: 'play-services-places', version: playServiceVersion],
+        retrofit : [group: 'com.squareup.retrofit2', name: 'retrofit', version: retrofitVersion],
+        retrofitGson : [group: 'com.squareup.retrofit2', name: 'converter-gson', version: retrofitVersion],
+        retrofitRxJava : [group: 'com.squareup.retrofit2', name: 'adapter-rxjava', version: retrofitVersion],
+        glide : [group: 'com.github.bumptech.glide', name: 'glide', version: glideVersion],
+        butterKnife : [group: 'com.jakewharton', name: 'butterknife', version: butterKnifeVersion],
+        rxAndroid : [group: 'io.reactivex', name: 'rxandroid', version: rxAndroidVersion],
+        rxJava : [group: 'io.reactivex', name: 'rxjava', version: rxJavaVersion],
+        dagger : [group: 'com.google.dagger', name: 'dagger', version: daggerVersion],
+        calligraphy : [group: 'uk.co.chrisjenx', name: 'calligraphy', version: calligraphyVersion],
+        jUnit : [group: "junit", name: "junit", version: junitVersion],
+
+        daggerCompiler : [group: 'com.google.dagger', name: 'dagger-compiler', version: daggerVersion],
+        butterKnifeCompiler : [group: 'com.jakewharton', name: 'butterknife-compiler', version: butterKnifeVersion],
+    ]
+
+    //Modules dependencies
+    appDependencies = [
+        [configuration: "compile", dependency: androidLibs.appcompatv7],
+        [configuration: "compile", dependency: androidLibs.design],
+        [configuration: "compile", dependency: androidLibs.cardView],
+        [configuration: "compile", dependency: androidLibs.multidex],
+        [configuration: "compile", dependency: extLibs.playServicesPlaces],
+        [configuration: "compile", dependency: extLibs.playServicesLocation],
+        [configuration: "compile", dependency: extLibs.glide],
+        [configuration: "compile", dependency: extLibs.butterKnife],
+        [configuration: "compile", dependency: extLibs.rxJava],
+        [configuration: "compile", dependency: extLibs.rxAndroid],
+        [configuration: "compile", dependency: extLibs.dagger],
+        [configuration: "compile", dependency: extLibs.calligraphy],
+        [configuration: "annotationProcessor", dependency: extLibs.daggerCompiler],
+        [configuration: "annotationProcessor", dependency: extLibs.butterKnifeCompiler],
+        [configuration: "testCompile", dependency: extLibs.jUnit],
+        [configuration: "androidTestCompile", dependency: androidLibs.espresso, closure: {
+            exclude group: 'com.android.support', module: 'support-annotations'
+        }],
+    ]
+
+    domainDependencies = [
+        [configuration: "compile", dependency: extLibs.rxJava],
+        [configuration: "compile", dependency: extLibs.rxAndroid],
+        [configuration: "compile", dependency: extLibs.dagger],
+        [configuration: "annotationProcessor", dependency: extLibs.daggerCompiler],
+        [configuration: "testCompile", dependency: extLibs.jUnit],
+        [configuration: "androidTestCompile", dependency: androidLibs.espresso],
+    ]
+
+    dataDependencies = [
+        [configuration: "compile", dependency: androidLibs.supportAnnotation],
+        [configuration: "compile", dependency: extLibs.rxJava],
+        [configuration: "compile", dependency: extLibs.rxAndroid],
+        [configuration: "compile", dependency: extLibs.retrofit],
+        [configuration: "compile", dependency: extLibs.retrofitGson],
+        [configuration: "compile", dependency: extLibs.retrofitRxJava],
+        [configuration: "compile", dependency: extLibs.dagger],
+        [configuration: "annotationProcessor", dependency: extLibs.daggerCompiler],
+        [configuration: "testCompile", dependency: extLibs.jUnit],
+        [configuration: "androidTestCompile", dependency: androidLibs.espresso],
+    ]
+}
