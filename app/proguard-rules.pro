@@ -15,3 +15,36 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+# Retrolambda
+-dontwarn java.lang.invoke.*
+
+# retrofit2
+-dontwarn okio.**
+-dontwarn javax.annotation.**
+-dontwarn retrofit2.Platform$Java8
+
+# rxjava
+-keep class rx.schedulers.Schedulers {
+    public static <methods>;
+}
+-keep class rx.schedulers.ImmediateScheduler {
+    public <methods>;
+}
+-keep class rx.schedulers.TestScheduler {
+    public <methods>;
+}
+-keep class rx.schedulers.Schedulers {
+    public static ** test();
+}
+-keepclassmembers class rx.internal.util.unsafe.*ArrayQueue*Field* {
+    long producerIndex;
+    long consumerIndex;
+}
+-keepclassmembers class rx.internal.util.unsafe.BaseLinkedQueueProducerNodeRef {
+    long producerNode;
+    long consumerNode;
+}
+
+# Do not obfuscate all data layer classes, as it's already passed the minify process using proguard
+-keep,allowshrinking,allowoptimization class com.levarech.weatcher.data.** { *; }

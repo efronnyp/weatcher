@@ -1,0 +1,65 @@
+apply plugin: 'com.android.library'
+apply plugin: 'realm-android'
+apply plugin: 'me.tatarka.retrolambda'
+
+android {
+    def globalConfig = rootProject.extensions.getByName("ext")
+
+    compileSdkVersion globalConfig['compileSdkVersion']
+    buildToolsVersion globalConfig['buildToolsVersion']
+
+    defaultConfig {
+        minSdkVersion globalConfig['minSdkVersion']
+        targetSdkVersion globalConfig['targetSdkVersion']
+        versionCode globalConfig['versionCode']
+        versionName globalConfig['versionName']
+
+        testInstrumentationRunner globalConfig['testInstrumentationRunner']
+
+    }
+    buildTypes {
+        debug {
+            debuggable true
+            minifyEnabled false
+        }
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    productFlavors {
+        development {
+            buildConfigField "String", "BASE_URL", String.format("\"http://api.wunderground.com/api/%s/\"", weatherAPIKeyDev)
+        }
+        production {
+            buildConfigField "String", "BASE_URL", String.format("\"http://api.wunderground.com/api/%s/\"", weatherAPIKeyProd)
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    android.variantFilter { variant ->
+        if (variant.buildType.name == 'release' &&
+                variant.flavors[0].name == 'development') {
+            variant.setIgnore(true)
+        }
+    }
+
+    publishNonDefault true
+}
+
+configurations {
+    productionDebugCompile
+    productionReleaseCompile
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    rootProject.dataDependencies.each {
+        add(it.configuration, it.dependency, it.closure)
+    }
+    developmentCompile project(path: ':domain', configuration: 'debug')
+    productionDebugCompile project(path: ':domain', configuration: 'debug')
+    productionReleaseCompile project(path: ':domain', configuration: 'release')
+}

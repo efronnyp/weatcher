@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
@@ -26,11 +25,11 @@ import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.PlaceBuffer;
 import com.google.android.gms.location.places.Places;
 import com.levarech.weatcher.R;
+import com.levarech.weatcher.domain.city.CityCondition;
 import com.levarech.weatcher.internal.di.components.DaggerActivityComponent;
 import com.levarech.weatcher.internal.di.modules.ActivityModule;
-import com.levarech.weatcher.model.local.CityConditions;
-import com.levarech.weatcher.presenter.WeatherPresenter;
-import com.levarech.weatcher.view.WeatherAddView;
+import com.levarech.weatcher.presenter.AddNewCityContract;
+import com.levarech.weatcher.view.BaseActivity;
 import com.levarech.weatcher.view.adapter.OnItemClickListener;
 import com.levarech.weatcher.view.adapter.SearchSuggestionAdapter;
 
@@ -51,16 +50,16 @@ import butterknife.OnClick;
  * Search city activity.
  */
 
-public class SearchCityActivity extends AppCompatActivity implements
-        GoogleApiClient.OnConnectionFailedListener,
-        OnItemClickListener<AutocompletePrediction>, WeatherAddView {
+public class SearchCityActivity extends BaseActivity
+        implements GoogleApiClient.OnConnectionFailedListener,
+        OnItemClickListener<AutocompletePrediction>, AddNewCityContract.View {
 
     private static final String TAG = SearchCityActivity.class.getSimpleName();
 
     @BindView(R.id.searchView) SearchView searchView;
     @BindView(R.id.rvCitySuggestions) RecyclerView rvCitySuggestions;
 
-    @Inject WeatherPresenter mPresenter;
+    @Inject AddNewCityContract.Presenter mPresenter;
     private GoogleApiClient mGoogleApiClient;
     private AutocompleteFilter mPlaceFilter;
     private List<AutocompletePrediction> mPredictions;
@@ -120,9 +119,10 @@ public class SearchCityActivity extends AppCompatActivity implements
     private void initInjector() {
         DaggerActivityComponent
                 .builder()
+                .applicationComponent(getApplicationComponent())
                 .activityModule(new ActivityModule(this))
                 .build()
-                .inject(this);
+                .injek(this);
     }
 
     private void setupRecyclerView() {
@@ -228,7 +228,7 @@ public class SearchCityActivity extends AppCompatActivity implements
                     /*if (countryCode != null && cityName != null) {
                         mPresenter.saveCityByName(countryCode, cityName);
                     } else {*/
-                        mPresenter.saveCityByLocation(lat, lon);
+                        mPresenter.saveNewCityByLocation(lat, lon);
                     //}
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -244,7 +244,7 @@ public class SearchCityActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onNewCitySavedSuccessfully(CityConditions conditions) {
+    public void onNewCitySavedSuccessfully(CityCondition cityCondition) {
         if (progressDialog != null) progressDialog.dismiss();
         finish();
     }

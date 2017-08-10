@@ -4,14 +4,17 @@ import com.levarech.weatcher.internal.di.modules.ActivityModule;
 import com.levarech.weatcher.view.activity.MainActivity;
 import com.levarech.weatcher.view.activity.SearchCityActivity;
 
+import javax.inject.Singleton;
+
 import dagger.Component;
 
 /**
  * Created by EFR on 18/06/2017.
  * Dagger Component for Weather Activity.
  */
-@Component(modules = ActivityModule.class)
+@Singleton
+@Component(dependencies = ApplicationComponent.class, modules = {ActivityModule.class})
 public interface ActivityComponent {
-    void inject(MainActivity mainActivity);
-    void inject(SearchCityActivity searchCityActivity);
+    void injek(MainActivity mainActivity);
+    void injek(SearchCityActivity searchCityActivity);
 }
